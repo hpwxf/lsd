@@ -51,6 +51,13 @@ impl Blocks {
             }
         }
 
+        if matches.is_present("git") {
+            // println!("ADD GIT BLOCK");
+            if let Ok(blocks) = result.as_mut() {
+                blocks.optional_prepend_git_status();
+            }
+        }
+
         result
     }
 
@@ -144,6 +151,24 @@ impl Blocks {
             self.prepend_inode()
         }
     }
+
+    /// Checks whether `self` already contains a [Block] of variant [INode](Block::INode).
+    fn contains_git_status(&self) -> bool {
+        self.0.contains(&Block::GitStatus)
+    }
+
+    /// Prepends a [Block] of variant [INode](Block::INode) to `self`.
+    fn prepend_git_status(&mut self) {
+        self.0.insert(0, Block::GitStatus);
+    }
+
+    /// Prepends a [Block] of variant [INode](Block::INode), if `self` does not already contain a
+    /// Block of that variant.
+    fn optional_prepend_git_status(&mut self) {
+        if !self.contains_git_status() {
+            self.prepend_git_status()
+        }
+    }
 }
 
 /// The default value for `Blocks` contains a [Vec] of [Name](Block::Name).
@@ -165,6 +190,7 @@ pub enum Block {
     Name,
     INode,
     Links,
+    GitStatus,
 }
 
 impl TryFrom<&str> for Block {
@@ -181,6 +207,7 @@ impl TryFrom<&str> for Block {
             "name" => Ok(Self::Name),
             "inode" => Ok(Self::INode),
             "links" => Ok(Self::Links),
+            "git_status" => Ok(Self::GitStatus),
             _ => Err(format!("Not a valid block name: {}", &string)),
         }
     }

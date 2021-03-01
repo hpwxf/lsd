@@ -1,5 +1,8 @@
+use log::{debug, error, info, trace, warn};
+
 mod date;
 mod filetype;
+mod git_status;
 mod indicator;
 mod inode;
 mod links;
@@ -14,6 +17,7 @@ mod windows_utils;
 
 pub use self::date::Date;
 pub use self::filetype::FileType;
+pub use self::git_status::GitStatus;
 pub use self::indicator::Indicator;
 pub use self::inode::INode;
 pub use self::links::Links;
@@ -27,6 +31,8 @@ pub use crate::icon::Icons;
 use crate::flags::{Display, Flags, Layout};
 use crate::print_error;
 
+use crate::git::GitCache;
+use std::fs;
 use std::fs::read_link;
 use std::io::{Error, ErrorKind};
 use std::path::{Component, Path, PathBuf};
@@ -45,6 +51,7 @@ pub struct Meta {
     pub inode: INode,
     pub links: Links,
     pub content: Option<Vec<Meta>>,
+    pub git_status: Option<GitStatus>,
 }
 
 impl Meta {
@@ -52,6 +59,7 @@ impl Meta {
         &self,
         depth: usize,
         flags: &Flags,
+        cache: &GitCache,
     ) -> Result<Option<Vec<Meta>>, std::io::Error> {
         if depth == 0 {
             return Ok(None);
@@ -121,6 +129,11 @@ impl Meta {
                 }
             };
 
+            let st = cache.get(&fs::canonicalize(&entry_meta.path).unwrap());
+            entry_meta.git_status = Some(GitStatus {
+                foo: format!("{:?}", st),
+            });
+
             // skip files for --tree -d
             if flags.layout == Layout::Tree {
                 if let Display::DirectoryOnly = flags.display {
@@ -130,7 +143,7 @@ impl Meta {
                 }
             }
 
-            match entry_meta.recurse_into(depth - 1, &flags) {
+            match entry_meta.recurse_into(depth - 1, &flags, &cache) {
                 Ok(content) => entry_meta.content = content,
                 Err(err) => {
                     print_error!("{}: {}.", path.display(), err);
@@ -238,6 +251,7 @@ impl Meta {
             name,
             file_type,
             content: None,
+            git_status: None,
         })
     }
 }

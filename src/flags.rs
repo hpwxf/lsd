@@ -3,6 +3,7 @@ pub mod color;
 pub mod date;
 pub mod dereference;
 pub mod display;
+pub mod git_status;
 pub mod icons;
 pub mod ignore_globs;
 pub mod indicators;
@@ -21,6 +22,7 @@ pub use color::ColorOption;
 pub use date::DateFlag;
 pub use dereference::Dereference;
 pub use display::Display;
+pub use git_status::GitStatus;
 pub use icons::IconOption;
 pub use icons::IconSeparator;
 pub use icons::IconTheme;
@@ -63,6 +65,7 @@ pub struct Flags {
     pub sorting: Sorting,
     pub total_size: TotalSize,
     pub symlink_arrow: SymlinkArrow,
+    pub git_status: GitStatus,
 }
 
 impl Flags {
@@ -89,6 +92,7 @@ impl Flags {
             sorting: Sorting::configure_from(matches, config),
             total_size: TotalSize::configure_from(matches, config),
             symlink_arrow: SymlinkArrow::configure_from(matches, config),
+            git_status: GitStatus::configure_from(matches, config),
         })
     }
 }
@@ -112,14 +116,17 @@ where
     /// out warnings.
     fn configure_from(matches: &ArgMatches, config: &Config) -> T {
         if let Some(value) = Self::from_arg_matches(matches) {
+            // println!("from arg {}", std::any::type_name::<T>());
             return value;
         }
 
         if let Some(value) = Self::from_environment() {
+            // println!("from env {}", std::any::type_name::<T>());
             return value;
         }
 
         if let Some(value) = Self::from_config(config) {
+            // println!("from config {}", std::any::type_name::<T>());
             return value;
         }
 

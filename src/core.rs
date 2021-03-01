@@ -1,8 +1,9 @@
 use crate::color::{self, Colors};
 use crate::display;
 use crate::flags::{ColorOption, Display, Flags, IconOption, IconTheme, Layout, SortOrder};
+use crate::git::GitCache;
 use crate::icon::{self, Icons};
-use crate::meta::Meta;
+use crate::meta::{GitStatus, Meta};
 use crate::{print_error, print_output, sort};
 use std::path::PathBuf;
 
@@ -96,12 +97,19 @@ impl Core {
                 }
             };
 
+            // Experimental
+            let cache = GitCache::new(&path).unwrap();
+
             let recurse =
                 self.flags.layout == Layout::Tree || self.flags.display != Display::DirectoryOnly;
             if recurse {
-                match meta.recurse_into(depth, &self.flags) {
+                match meta.recurse_into(depth, &self.flags, &cache) {
                     Ok(content) => {
                         meta.content = content;
+                        println!("Git Recurse");
+                        meta.git_status = Some(GitStatus {
+                            foo: format!("DEBUG2 {:?}", meta.path),
+                        });
                         meta_list.push(meta);
                     }
                     Err(err) => {
@@ -110,6 +118,11 @@ impl Core {
                     }
                 };
             } else {
+                panic!("USELESS?");
+                println!("Git Flat");
+                meta.git_status = Some(GitStatus {
+                    foo: format!("DEBUG3 {:?}", meta.path),
+                });
                 meta_list.push(meta);
             };
         }

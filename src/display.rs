@@ -67,7 +67,7 @@ fn inner_display_grid(
     for meta in metas {
         // Maybe skip showing the directory meta now; show its contents later.
         if skip_dirs
-            && (matches!(meta.file_type, FileType::Directory{..})
+            && (matches!(meta.file_type, FileType::Directory { .. })
                 || (matches!(meta.file_type, FileType::SymLink { is_dir: true })
                     && flags.layout != Layout::OneLine))
         {
@@ -293,6 +293,14 @@ fn get_output<'a>(
                     };
 
                 strings.push(ColoredString::from(s));
+            }
+            Block::GitStatus => {
+                if let Some(s) = &meta.git_status {
+                    // FIXME
+                    strings.push(ColoredString::from(s.foo.clone()))
+                } else {
+                    strings.push(ColoredString::from(String::from("nop")))
+                }
             }
         };
     }

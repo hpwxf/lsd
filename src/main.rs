@@ -34,7 +34,9 @@ mod config_file;
 mod core;
 mod display;
 mod flags;
+mod git;
 mod icon;
+mod logger;
 mod meta;
 mod sort;
 
@@ -90,6 +92,7 @@ macro_rules! print_output {
 }
 
 fn main() {
+    logger::init();
     let matches = app::build().get_matches_from(wild::args_os());
 
     // input translate glob FILE without single quote into real names

@@ -12,6 +12,7 @@ use std::path::PathBuf;
 
 use serde::Deserialize;
 
+use crate::flags::git_status::GitStatus;
 use std::fs;
 
 const CONF_DIR: &str = "lsd";
@@ -40,6 +41,7 @@ pub struct Config {
     pub no_symlink: Option<bool>,
     pub total_size: Option<bool>,
     pub symlink_arrow: Option<String>,
+    pub git_status: Option<GitStatus>,
 }
 
 #[derive(Eq, PartialEq, Debug, Deserialize)]
@@ -88,6 +90,7 @@ impl Config {
             no_symlink: None,
             total_size: None,
             symlink_arrow: None,
+            git_status: None,
         }
     }
 
@@ -170,7 +173,7 @@ classic: false
 # == Blocks ==
 # This specifies the columns and their order when using the long and the tree
 # layout.
-# Possible values: permission, user, group, size, size_value, date, name, inode
+# Possible values: permission, user, group, size, size_value, date, name, inode, git_status
 blocks:
   - permission
   - user
@@ -336,6 +339,7 @@ mod tests {
                 no_symlink: Some(false),
                 total_size: Some(false),
                 symlink_arrow: Some("⇒".into()),
+                git_status: None,
             },
             c
         );
