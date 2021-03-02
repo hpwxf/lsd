@@ -111,9 +111,8 @@ impl Core {
                 match meta.recurse_into(depth, &self.flags, cache.as_ref()) {
                     Ok(content) => {
                         meta.content = content;
-                        debug!("Git Recurse");
                         meta.git_status =
-                            Some(GitFileStatusOrError(Err(format!("DEBUG2 {:?}", meta.path))));
+                            Some(GitFileStatusOrError(Err(format!("DEBUG2 {:?}", meta.path)))); // TODO
                         meta_list.push(meta);
                     }
                     Err(err) => {
@@ -123,7 +122,7 @@ impl Core {
                 };
             } else {
                 meta.git_status =
-                    Some(GitFileStatusOrError(Err(format!("DEBUG3 {:?}", meta.path))));
+                    Some(GitFileStatusOrError(Err(format!("DEBUG3 {:?}", meta.path)))); // TODO
                 meta_list.push(meta);
             };
         }
