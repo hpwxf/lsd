@@ -1,8 +1,9 @@
+#[allow(unused)]
 use log::{debug, error, info, trace, warn};
 
 mod date;
 mod filetype;
-mod git_status;
+mod git_file_status;
 mod indicator;
 mod inode;
 mod links;
@@ -17,7 +18,7 @@ mod windows_utils;
 
 pub use self::date::Date;
 pub use self::filetype::FileType;
-pub use self::git_status::GitStatus;
+pub use self::git_file_status::GitFileStatusOrError;
 pub use self::indicator::Indicator;
 pub use self::inode::INode;
 pub use self::links::Links;
@@ -51,7 +52,7 @@ pub struct Meta {
     pub inode: INode,
     pub links: Links,
     pub content: Option<Vec<Meta>>,
-    pub git_status: Option<GitStatus>,
+    pub git_status: Option<GitFileStatusOrError>,
 }
 
 impl Meta {
@@ -59,7 +60,7 @@ impl Meta {
         &self,
         depth: usize,
         flags: &Flags,
-        cache: &GitCache,
+        cache: Option<&GitCache>,
     ) -> Result<Option<Vec<Meta>>, std::io::Error> {
         if depth == 0 {
             return Ok(None);
@@ -129,9 +130,11 @@ impl Meta {
                 }
             };
 
-            let st = cache.get(&fs::canonicalize(&entry_meta.path).unwrap());
-            entry_meta.git_status = Some(GitStatus {
-                foo: format!("{:?}", st),
+            cache.map(|cache| {
+                entry_meta.git_status = match fs::canonicalize(&entry_meta.path) {
+                    Ok(filename) => Some(GitFileStatusOrError(Ok(cache.get(&filename)))),
+                    Err(err) => Some(GitFileStatusOrError(Err(format!("error {}", err)))),
+                }
             });
 
             // skip files for --tree -d
@@ -143,7 +146,7 @@ impl Meta {
                 }
             }
 
-            match entry_meta.recurse_into(depth - 1, &flags, &cache) {
+            match entry_meta.recurse_into(depth - 1, &flags, cache) {
                 Ok(content) => entry_meta.content = content,
                 Err(err) => {
                     print_error!("{}: {}.", path.display(), err);

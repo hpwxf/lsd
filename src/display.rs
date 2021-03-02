@@ -296,10 +296,7 @@ fn get_output<'a>(
             }
             Block::GitStatus => {
                 if let Some(s) = &meta.git_status {
-                    // FIXME
-                    strings.push(ColoredString::from(s.foo.clone()))
-                } else {
-                    strings.push(ColoredString::from(String::from("nop")))
+                    strings.push(s.render(icons))
                 }
             }
         };
@@ -509,7 +506,7 @@ mod tests {
         dir.child("one.d/.hidden").touch().unwrap();
         let metas = Meta::from_path(Path::new(dir.path()), false)
             .unwrap()
-            .recurse_into(42, &flags)
+            .recurse_into(42, &flags, None)
             .unwrap()
             .unwrap();
         let output = inner_display_tree(

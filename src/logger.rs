@@ -1,4 +1,4 @@
-use log::{LevelFilter, SetLoggerError};
+use log::LevelFilter;
 
 #[derive(Debug)]
 struct Logger;
@@ -9,12 +9,12 @@ struct SimpleLogger;
 
 impl log::Log for SimpleLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
-        true // metadata.level() <= Level::Info
+        metadata.level() <= Level::Debug
     }
 
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
-            println!("{} - {}", record.level(), record.args());
+            println!("[{:5}] {}", record.level(), record.args());
         }
     }
 
@@ -23,7 +23,15 @@ impl log::Log for SimpleLogger {
 
 static LOGGER: &SimpleLogger = &SimpleLogger;
 
-pub fn init() -> Result<(), SetLoggerError> {
-    println!("Logger started");
-    log::set_logger(LOGGER).map(|()| log::set_max_level(LevelFilter::Info))
+pub fn init() {
+    if let Ok(value) = std::env::var("LSD_LOGGER") {
+        match value.as_str() {
+            _ => {
+                println!("Logger started");
+                log::set_logger(LOGGER)
+                    .map(|()| log::set_max_level(LevelFilter::Debug))
+                    .unwrap();
+            }
+        }
+    }
 }

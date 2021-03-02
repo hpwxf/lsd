@@ -1,10 +1,12 @@
 use crate::color::{self, Colors};
 use crate::display;
-use crate::flags::{ColorOption, Display, Flags, IconOption, IconTheme, Layout, SortOrder};
+use crate::flags::{Block, ColorOption, Display, Flags, IconOption, IconTheme, Layout, SortOrder};
 use crate::git::GitCache;
 use crate::icon::{self, Icons};
-use crate::meta::{GitStatus, Meta};
+use crate::meta::{GitFileStatusOrError, Meta};
 use crate::{print_error, print_output, sort};
+#[allow(unused)]
+use log::{debug, error, info, trace, warn};
 use std::path::PathBuf;
 
 #[cfg(not(target_os = "windows"))]
@@ -25,7 +27,7 @@ pub struct Core {
 
 impl Core {
     pub fn new(flags: Flags) -> Self {
-        // Check through libc if stdout is a tty. Unix specific so not on windows.
+        // Check through libc if stdout is a tty. Unix specific so not on Windows.
         // Determine color output availability (and initialize color output (for Windows 10))
         #[cfg(not(target_os = "windows"))]
         let tty_available = unsafe { libc::isatty(io::stdout().as_raw_fd()) == 1 };
@@ -39,7 +41,7 @@ impl Core {
         #[cfg(target_os = "windows")]
         let console_color_ok = ansi_term::enable_ansi_support().is_ok();
 
-        let mut inner_flags = flags.clone();
+        let mut inner_flags = flags.clone(); // FIXME not used ?
 
         let color_theme = match (tty_available && console_color_ok, flags.color.when) {
             (_, ColorOption::Never) | (false, ColorOption::Auto) => color::Theme::NoColor,
@@ -97,19 +99,21 @@ impl Core {
                 }
             };
 
-            // Experimental
-            let cache = GitCache::new(&path).unwrap();
+            let cache = if self.flags.blocks.0.contains(&Block::GitStatus) {
+                Some(GitCache::new(&path))
+            } else {
+                None
+            };
 
             let recurse =
                 self.flags.layout == Layout::Tree || self.flags.display != Display::DirectoryOnly;
             if recurse {
-                match meta.recurse_into(depth, &self.flags, &cache) {
+                match meta.recurse_into(depth, &self.flags, cache.as_ref()) {
                     Ok(content) => {
                         meta.content = content;
-                        println!("Git Recurse");
-                        meta.git_status = Some(GitStatus {
-                            foo: format!("DEBUG2 {:?}", meta.path),
-                        });
+                        debug!("Git Recurse");
+                        meta.git_status =
+                            Some(GitFileStatusOrError(Err(format!("DEBUG2 {:?}", meta.path))));
                         meta_list.push(meta);
                     }
                     Err(err) => {
@@ -118,11 +122,8 @@ impl Core {
                     }
                 };
             } else {
-                panic!("USELESS?");
-                println!("Git Flat");
-                meta.git_status = Some(GitStatus {
-                    foo: format!("DEBUG3 {:?}", meta.path),
-                });
+                meta.git_status =
+                    Some(GitFileStatusOrError(Err(format!("DEBUG3 {:?}", meta.path))));
                 meta_list.push(meta);
             };
         }

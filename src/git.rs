@@ -1,8 +1,9 @@
+#[allow(unused)]
 use log::{debug, error, info, trace, warn};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum GitStatus {
     /// No changes
     Unmodified,
@@ -22,52 +23,62 @@ pub enum GitStatus {
     Conflicted,
 }
 
-impl GitStatus {
-    fn worktree_new(status: git2::Status) -> GitStatus {
-        match status {
-            s if s.contains(git2::Status::WT_NEW) => GitStatus::New,
-            s if s.contains(git2::Status::WT_DELETED) => GitStatus::Deleted,
-            s if s.contains(git2::Status::WT_MODIFIED) => GitStatus::Modified,
-            s if s.contains(git2::Status::WT_RENAMED) => GitStatus::Renamed,
-            s if s.contains(git2::Status::IGNORED) => GitStatus::Ignored,
-            s if s.contains(git2::Status::WT_TYPECHANGE) => GitStatus::Typechange,
-            s if s.contains(git2::Status::CONFLICTED) => GitStatus::Conflicted,
-            _ => GitStatus::Unmodified,
-        }
-    }
-    fn index_new(status: git2::Status) -> GitStatus {
-        match status {
-            s if s.contains(git2::Status::INDEX_NEW) => GitStatus::New,
-            s if s.contains(git2::Status::INDEX_DELETED) => GitStatus::Deleted,
-            s if s.contains(git2::Status::INDEX_MODIFIED) => GitStatus::Modified,
-            s if s.contains(git2::Status::INDEX_RENAMED) => GitStatus::Renamed,
-            s if s.contains(git2::Status::INDEX_TYPECHANGE) => GitStatus::Typechange,
-            _ => GitStatus::Unmodified,
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct GitStagedStatus {
+    pub index: GitStatus,
+    pub workdir: GitStatus,
+}
+
+impl Default for GitStagedStatus {
+    fn default() -> Self {
+        Self {
+            index: GitStatus::Unmodified,
+            workdir: GitStatus::Unmodified,
         }
     }
 }
 
-impl Default for GitStatus {
-    fn default() -> Self {
-        GitStatus::Unmodified
+impl GitStagedStatus {
+    fn new(status: git2::Status) -> Self {
+        Self {
+            index: match status {
+                s if s.contains(git2::Status::INDEX_NEW) => GitStatus::New,
+                s if s.contains(git2::Status::INDEX_DELETED) => GitStatus::Deleted,
+                s if s.contains(git2::Status::INDEX_MODIFIED) => GitStatus::Modified,
+                s if s.contains(git2::Status::INDEX_RENAMED) => GitStatus::Renamed,
+                s if s.contains(git2::Status::INDEX_TYPECHANGE) => GitStatus::Typechange,
+                _ => GitStatus::Unmodified,
+            },
+
+            workdir: match status {
+                s if s.contains(git2::Status::WT_NEW) => GitStatus::New,
+                s if s.contains(git2::Status::WT_DELETED) => GitStatus::Deleted,
+                s if s.contains(git2::Status::WT_MODIFIED) => GitStatus::Modified,
+                s if s.contains(git2::Status::WT_RENAMED) => GitStatus::Renamed,
+                s if s.contains(git2::Status::IGNORED) => GitStatus::Ignored,
+                s if s.contains(git2::Status::WT_TYPECHANGE) => GitStatus::Typechange,
+                s if s.contains(git2::Status::CONFLICTED) => GitStatus::Conflicted,
+                _ => GitStatus::Unmodified,
+            },
+        }
     }
 }
 
 pub struct GitCache {
     statuses: Vec<(PathBuf, git2::Status)>,
-    pub currentdir: PathBuf,
+    _cached_dir: Option<PathBuf>,
 }
 
 impl GitCache {
-    pub fn new(path: &PathBuf) -> Result<GitCache, &PathBuf> {
+    pub fn new(path: &PathBuf) -> GitCache {
         let cachedir = fs::canonicalize(&path).unwrap();
-        info!("GIT PROCESSING {:?}", cachedir);
+        debug!("GIT PROCESSING {:?}", cachedir);
 
         let repo = match git2::Repository::discover(&path) {
             Ok(r) => r,
             Err(e) => {
                 error!("Error discovering Git repositories: {:?}", e);
-                return Err(path);
+                return Self::empty();
             }
         };
 
@@ -90,36 +101,29 @@ impl GitCache {
             // info!("Cache: {:?}", statuses);
             info!("GitCache path: {:?}", cachedir);
 
-            return Ok(GitCache {
+            GitCache {
                 statuses,
-                currentdir: cachedir,
-            }); // FIXME unwrap
+                _cached_dir: Some(cachedir),
+            }
+        } else {
+            debug!("No workdir");
+            Self::empty()
         }
-        return Err(path);
     }
 
-    pub fn get(&self, filepath: &PathBuf) -> (GitStatus, GitStatus) {
-        // let filepath = filepath.strip_prefix("./").unwrap();
-        //
-        info!("Look for {:?}", filepath);
-        // let repo = match git2::Repository::discover(&self.currentdir) {
-        //     Ok(r) => r,
-        //     Err(e) => {
-        //         panic!("Error discovering Git repositories: {:?}", e);
-        //     }
-        // };
-        // match repo.status_file(filepath) {
-        //     Ok(s) => Some((GitStatus::worktree_new(s), GitStatus::index_new(s))),
-        //     Err(e) => {
-        //         warn!("Not git found {:?} {:?}", filepath, e);
-        //         None
-        //     }
-        // }
+    pub fn empty() -> Self {
+        GitCache {
+            statuses: Vec::new(),
+            _cached_dir: None,
+        }
+    }
 
+    pub fn get(&self, filepath: &PathBuf) -> GitStagedStatus {
+        debug!("Look for {:?}", filepath);
         self.statuses
             .iter()
             .find(|&x| filepath == &x.0)
-            .map(|e| (GitStatus::worktree_new(e.1), GitStatus::index_new(e.1)))
-            .unwrap_or((GitStatus::default(), GitStatus::default()))
+            .map(|e| GitStagedStatus::new(e.1))
+            .unwrap_or(GitStagedStatus::default())
     }
 }

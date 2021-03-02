@@ -1,3 +1,4 @@
+use crate::git::GitStatus;
 use crate::meta::{FileType, Name};
 use std::collections::HashMap;
 
@@ -8,6 +9,7 @@ pub struct Icons {
     default_folder_icon: &'static str,
     default_file_icon: &'static str,
     icon_separator: String,
+    icons_by_git_status: HashMap<GitStatus, &'static str>,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -24,22 +26,29 @@ pub enum Theme {
 impl Icons {
     pub fn new(theme: Theme, icon_separator: String) -> Self {
         let display_icons = theme == Theme::Fancy || theme == Theme::Unicode;
-        let (icons_by_name, icons_by_extension, default_file_icon, default_folder_icon) =
-            if theme == Theme::Fancy {
-                (
-                    Self::get_default_icons_by_name(),
-                    Self::get_default_icons_by_extension(),
-                    "\u{f016}", // 
-                    "\u{f115}", // 
-                )
-            } else {
-                (
-                    HashMap::new(),
-                    HashMap::new(),
-                    "\u{1f5cb}", // 🗋
-                    "\u{1f5c1}", // 🗁
-                )
-            };
+        let (
+            icons_by_name,
+            icons_by_extension,
+            default_file_icon,
+            default_folder_icon,
+            icons_by_git_status,
+        ) = if theme == Theme::Fancy {
+            (
+                Self::get_default_icons_by_name(),
+                Self::get_default_icons_by_extension(),
+                "\u{f016}", // 
+                "\u{f115}", // 
+                Self::get_default_icons_by_git_status(),
+            )
+        } else {
+            (
+                HashMap::new(),
+                HashMap::new(),
+                "\u{1f5cb}", // 🗋
+                "\u{1f5c1}", // 🗁
+                HashMap::new(),
+            )
+        };
 
         Self {
             display_icons,
@@ -48,6 +57,7 @@ impl Icons {
             default_file_icon,
             default_folder_icon,
             icon_separator,
+            icons_by_git_status,
         }
     }
 
@@ -338,6 +348,39 @@ impl Icons {
         m.insert("zsh", "\u{f489}"); // ""
         m.insert("zsh-theme", "\u{f489}"); // ""
         m.insert("zshrc", "\u{f489}"); // ""
+
+        m
+    }
+
+    pub fn git_status_symbol(&self, status: &GitStatus) -> String {
+        if let Some(icon) = self.icons_by_git_status.get(status) {
+            icon.to_string()
+        } else {
+            match status {
+                GitStatus::Unmodified => "-",
+                GitStatus::New => "?",
+                GitStatus::Deleted => "D",
+                GitStatus::Modified => "M",
+                GitStatus::Renamed => "R",
+                GitStatus::Ignored => "!",
+                GitStatus::Typechange => "T",
+                GitStatus::Conflicted => "C",
+            }
+            .to_owned()
+        }
+    }
+
+    fn get_default_icons_by_git_status() -> HashMap<GitStatus, &'static str> {
+        let /* mut */ m = HashMap::new(); // FIXME prefer direct table
+
+        // m.insert(GitStatus::Unmodified, "\u{f00c}");
+        // m.insert(GitStatus::New, "\u{fafb}");
+        // m.insert(GitStatus::Deleted, "D");
+        // m.insert(GitStatus::Modified, "\u{f013}");
+        // m.insert(GitStatus::Renamed, "R");
+        // m.insert(GitStatus::Ignored, "\u{f12a}");
+        // m.insert(GitStatus::Typechange, "T");
+        // m.insert(GitStatus::Conflicted, "C");
 
         m
     }

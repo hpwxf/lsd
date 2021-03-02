@@ -277,14 +277,7 @@ pub fn build() -> App<'static, 'static> {
             Arg::with_name("git")
                 .long("git")
                 .multiple(true)
-                .number_of_values(1)
-                .value_name("mode")
-                .default_value("flat")
-                .possible_values(&[
-                    "flat",
-                    "recursive",
-                ])
-                .help("Git status help ") // TODO
+                .help("Show git status on file and directory") 
         )
 }
 

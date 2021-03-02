@@ -12,7 +12,6 @@ use std::path::PathBuf;
 
 use serde::Deserialize;
 
-use crate::flags::git_status::GitStatus;
 use std::fs;
 
 const CONF_DIR: &str = "lsd";
@@ -41,7 +40,6 @@ pub struct Config {
     pub no_symlink: Option<bool>,
     pub total_size: Option<bool>,
     pub symlink_arrow: Option<String>,
-    pub git_status: Option<GitStatus>,
 }
 
 #[derive(Eq, PartialEq, Debug, Deserialize)]
@@ -90,7 +88,6 @@ impl Config {
             no_symlink: None,
             total_size: None,
             symlink_arrow: None,
-            git_status: None,
         }
     }
 
@@ -339,7 +336,6 @@ mod tests {
                 no_symlink: Some(false),
                 total_size: Some(false),
                 symlink_arrow: Some("⇒".into()),
-                git_status: None,
             },
             c
         );

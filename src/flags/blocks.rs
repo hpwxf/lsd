@@ -51,10 +51,9 @@ impl Blocks {
             }
         }
 
-        if matches.is_present("git") {
-            // println!("ADD GIT BLOCK");
+        if matches.is_present("git") && matches.is_present("long") {
             if let Ok(blocks) = result.as_mut() {
-                blocks.optional_prepend_git_status();
+                blocks.optional_add_git_status();
             }
         }
 
@@ -152,21 +151,25 @@ impl Blocks {
         }
     }
 
-    /// Checks whether `self` already contains a [Block] of variant [INode](Block::INode).
+    /// Checks whether `self` already contains a [Block] of variant [GitStatus](Block::GitSatus).
     fn contains_git_status(&self) -> bool {
         self.0.contains(&Block::GitStatus)
     }
 
-    /// Prepends a [Block] of variant [INode](Block::INode) to `self`.
-    fn prepend_git_status(&mut self) {
-        self.0.insert(0, Block::GitStatus);
+    /// Put a [Block] of variant [GitStatus](Block::GitSatus) on the left of [GitStatus](Block::Name) to `self`.
+    fn add_git_status(&mut self) {
+        if let Some(position) = self.0.iter().position(|&b| b == Block::Name) {
+            self.0.insert(position, Block::GitStatus);
+        } else {
+            self.0.push(Block::GitStatus);
+        }
     }
 
-    /// Prepends a [Block] of variant [INode](Block::INode), if `self` does not already contain a
+    /// Prepends a [Block] of variant [GitStatus](Block::GitSatus), if `self` does not already contain a
     /// Block of that variant.
-    fn optional_prepend_git_status(&mut self) {
+    fn optional_add_git_status(&mut self) {
         if !self.contains_git_status() {
-            self.prepend_git_status()
+            self.add_git_status()
         }
     }
 }
@@ -419,6 +422,79 @@ mod test_blocks {
     }
 
     #[test]
+    fn test_from_arg_matches_implicit_add_git_block() {
+        let argv = vec![
+            "lsd",
+            "--blocks",
+            "permission,name,group,date",
+            "--git",
+            "--long",
+        ];
+        let matches = app::build().get_matches_from_safe(argv).unwrap();
+        let test_blocks = Blocks(vec![
+            Block::Permission,
+            Block::GitStatus,
+            Block::Name,
+            Block::Group,
+            Block::Date,
+        ]);
+        assert!(
+            match Blocks::configure_from(&matches, &Config::with_none()) {
+                Ok(blocks) if blocks == test_blocks => true,
+                _ => false,
+            }
+        );
+    }
+
+    #[test]
+    fn test_from_arg_matches_no_implicit_add_git_block_if_not_long() {
+        let argv = vec![
+            "lsd",
+            "--blocks",
+            "permission,name,group,git_status,date",
+            "--git",
+        ];
+        let matches = app::build().get_matches_from_safe(argv).unwrap();
+        let test_blocks = Blocks(vec![
+            Block::Permission,
+            Block::Name,
+            Block::Group,
+            Block::GitStatus,
+            Block::Date,
+        ]);
+        assert!(
+            match Blocks::configure_from(&matches, &Config::with_none()) {
+                Ok(blocks) if blocks == test_blocks => true,
+                _ => false,
+            }
+        );
+    }
+
+    #[test]
+    fn test_from_arg_matches_no_implicit_add_git_block_if_already_here() {
+        let argv = vec![
+            "lsd",
+            "--blocks",
+            "permission,name,group,git_status,date",
+            "--git",
+        ];
+        let matches = app::build().get_matches_from_safe(argv).unwrap();
+        let test_blocks = Blocks(vec![
+            Block::Permission,
+            Block::Name,
+            Block::Group,
+            Block::GitStatus,
+            Block::Date,
+        ]);
+        assert!(
+            match Blocks::configure_from(&matches, &Config::with_none()) {
+                Ok(blocks) if blocks == test_blocks => true,
+                _ => false,
+            }
+        );
+    }
+
+    #[test]
     fn test_from_config_none() {
         assert_eq!(None, Blocks::from_config(&Config::with_none()));
     }
@@ -532,5 +608,10 @@ mod test_block {
     #[test]
     fn test_links() {
         assert_eq!(Ok(Block::Links), Block::try_from("links"));
+    }
+
+    #[test]
+    fn test_git_status() {
+        assert_eq!(Ok(Block::GitStatus), Block::try_from("git_status"));
     }
 }
