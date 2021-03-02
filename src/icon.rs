@@ -1,4 +1,4 @@
-use crate::git::GitStatus;
+use crate::git::{GitStatus, StagedArea};
 use crate::meta::{FileType, Name};
 use std::collections::HashMap;
 
@@ -352,13 +352,16 @@ impl Icons {
         m
     }
 
-    pub fn git_status_symbol(&self, status: &GitStatus) -> String {
+    pub fn git_status_symbol(&self, status: &GitStatus, area: StagedArea) -> String {
         if let Some(icon) = self.icons_by_git_status.get(status) {
             icon.to_string()
         } else {
             match status {
                 GitStatus::Unmodified => "-",
-                GitStatus::New => "?",
+                GitStatus::New => match area {
+                    StagedArea::Index => "N",
+                    StagedArea::Workdir => "?",
+                },
                 GitStatus::Deleted => "D",
                 GitStatus::Modified => "M",
                 GitStatus::Renamed => "R",

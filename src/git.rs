@@ -3,22 +3,22 @@ use log::{debug, error, info, trace, warn};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum GitStatus {
     /// No changes
     Unmodified,
-    /// Entry does not exist in old version
-    New,
-    /// Entry does not exist in new version
-    Deleted,
-    /// Entry content changed between old and new
-    Modified,
-    /// Entry was renamed between old and new
-    Renamed,
     /// Entry is ignored item in workdir
     Ignored,
+    /// Entry does not exist in old version
+    New,
     /// Type of entry changed between old and new
     Typechange,
+    /// Entry does not exist in new version
+    Deleted,
+    /// Entry was renamed between old and new
+    Renamed,
+    /// Entry content changed between old and new
+    Modified,
     /// Entry in the index is conflicted
     Conflicted,
 }
@@ -27,6 +27,11 @@ pub enum GitStatus {
 pub struct GitStagedStatus {
     pub index: GitStatus,
     pub workdir: GitStatus,
+}
+
+pub enum StagedArea {
+    Index,
+    Workdir
 }
 
 impl Default for GitStagedStatus {
@@ -72,33 +77,32 @@ pub struct GitCache {
 impl GitCache {
     pub fn new(path: &PathBuf) -> GitCache {
         let cachedir = fs::canonicalize(&path).unwrap();
-        debug!("GIT PROCESSING {:?}", cachedir);
+        info!("Trying to retrieve Git statuses for {:?}", cachedir);
 
         let repo = match git2::Repository::discover(&path) {
             Ok(r) => r,
             Err(e) => {
-                error!("Error discovering Git repositories: {:?}", e);
+                warn!("Git discovery error: {:?}", e);
                 return Self::empty();
             }
         };
 
         if let Some(workdir) = repo.workdir() {
             let mut statuses = Vec::new();
-            info!("Getting Git statuses for repo with workdir {:?}", workdir);
+            info!("Retrieving Git statuses for workdir {:?}", workdir);
             match repo.statuses(None) {
                 Ok(status_list) => {
                     for status_entry in status_list.iter() {
                         let path = workdir.join(Path::new(status_entry.path().unwrap()));
                         let elem = (path, status_entry.status());
-                        info!("{:?}", elem);
+                        debug!("{:?}", elem);
                         statuses.push(elem);
                     }
                 }
                 Err(e) => {
-                    error!("Error looking up Git statuses: {:?}", e)
+                    warn!("Git retrieve statuses error: {:?}", e)
                 }
             }
-            // info!("Cache: {:?}", statuses);
             info!("GitCache path: {:?}", cachedir);
 
             GitCache {
@@ -118,12 +122,35 @@ impl GitCache {
         }
     }
 
-    pub fn get(&self, filepath: &PathBuf) -> GitStagedStatus {
-        debug!("Look for {:?}", filepath);
-        self.statuses
-            .iter()
-            .find(|&x| filepath == &x.0)
-            .map(|e| GitStagedStatus::new(e.1))
-            .unwrap_or(GitStagedStatus::default())
+    pub fn get(&self, filepath: &PathBuf, is_directory: bool) -> GitStagedStatus {
+        debug!("Look for [recurse={}] {:?}", is_directory, filepath);
+
+        if is_directory {
+            self.statuses
+                .iter()
+                .filter(|&x| x.0.starts_with(filepath))
+                .inspect(|&x| debug!("\t{:?}", x.0))
+                .map(|x| GitStagedStatus::new(x.1))
+                .fold(GitStagedStatus::default(), |acc, x| GitStagedStatus {
+                    index: std::cmp::max(acc.index, x.index),
+                    workdir: std::cmp::max(acc.workdir, x.workdir),
+                })
+        } else {
+            self.statuses
+                .iter()
+                .find(|&x| filepath == &x.0)
+                .map(|e| GitStagedStatus::new(e.1))
+                .unwrap_or(GitStagedStatus::default())
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn compare_git_status() {
+        assert!(GitStatus::Unmodified < GitStatus::Conflicted);
     }
 }

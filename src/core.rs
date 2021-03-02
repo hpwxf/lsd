@@ -14,6 +14,7 @@ use std::io;
 #[cfg(not(target_os = "windows"))]
 use std::os::unix::io::AsRawFd;
 
+use std::fs;
 #[cfg(target_os = "windows")]
 use terminal_size::terminal_size;
 
@@ -111,8 +112,17 @@ impl Core {
                 match meta.recurse_into(depth, &self.flags, cache.as_ref()) {
                     Ok(content) => {
                         meta.content = content;
-                        meta.git_status =
-                            Some(GitFileStatusOrError(Err(format!("DEBUG2 {:?}", meta.path)))); // TODO
+                        cache.map(|cache| {
+                            let is_directory = true;
+                            meta.git_status = match fs::canonicalize(&meta.path) {
+                                Ok(filename) => Some(GitFileStatusOrError(Ok(
+                                    cache.get(&filename, is_directory)
+                                ))),
+                                Err(err) => {
+                                    Some(GitFileStatusOrError(Err(format!("error {}", err))))
+                                }
+                            };
+                        });
                         meta_list.push(meta);
                     }
                     Err(err) => {
@@ -121,8 +131,16 @@ impl Core {
                     }
                 };
             } else {
-                meta.git_status =
-                    Some(GitFileStatusOrError(Err(format!("DEBUG3 {:?}", meta.path)))); // TODO
+                // FIXME DUPLICATED (cf above)
+                cache.map(|cache| {
+                    let is_directory = true;
+                    meta.git_status = match fs::canonicalize(&meta.path) {
+                        Ok(filename) => {
+                            Some(GitFileStatusOrError(Ok(cache.get(&filename, is_directory))))
+                        }
+                        Err(err) => Some(GitFileStatusOrError(Err(format!("error {}", err)))),
+                    };
+                });
                 meta_list.push(meta);
             };
         }

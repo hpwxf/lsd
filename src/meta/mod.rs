@@ -130,17 +130,13 @@ impl Meta {
                 }
             };
 
-            cache.map(|cache| {
-                entry_meta.git_status = match fs::canonicalize(&entry_meta.path) {
-                    Ok(filename) => Some(GitFileStatusOrError(Ok(cache.get(&filename)))),
-                    Err(err) => Some(GitFileStatusOrError(Err(format!("error {}", err)))),
-                }
-            });
-
+            let is_directory =entry.file_type()?.is_dir(); 
+            
+            
             // skip files for --tree -d
             if flags.layout == Layout::Tree {
                 if let Display::DirectoryOnly = flags.display {
-                    if !entry.file_type()?.is_dir() {
+                    if !is_directory {
                         continue;
                     }
                 }
@@ -154,6 +150,13 @@ impl Meta {
                 }
             };
 
+            cache.map(|cache| {
+                entry_meta.git_status = match fs::canonicalize(&entry_meta.path) {
+                    Ok(filename) => Some(GitFileStatusOrError(Ok(cache.get(&filename, is_directory)))),
+                    Err(err) => Some(GitFileStatusOrError(Err(format!("error {}", err)))),
+                }
+            });
+            
             content.push(entry_meta);
         }
 
