@@ -3,7 +3,7 @@ use crate::display;
 use crate::flags::{Block, ColorOption, Display, Flags, IconOption, IconTheme, Layout, SortOrder};
 use crate::git::GitCache;
 use crate::icon::{self, Icons};
-use crate::meta::{GitFileStatusOrError, Meta};
+use crate::meta::{GitFileStatus, Meta};
 use crate::{print_error, print_output, sort};
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
@@ -115,11 +115,11 @@ impl Core {
                         cache.map(|cache| {
                             let is_directory = true;
                             meta.git_status = match fs::canonicalize(&meta.path) {
-                                Ok(filename) => Some(GitFileStatusOrError(Ok(
+                                Ok(filename) => Some(GitFileStatus::Ok(
                                     cache.get(&filename, is_directory)
-                                ))),
+                                )),
                                 Err(err) => {
-                                    Some(GitFileStatusOrError(Err(format!("error {}", err))))
+                                    Some(GitFileStatus::Err(format!("error {}", err)))
                                 }
                             };
                         });
@@ -136,9 +136,9 @@ impl Core {
                     let is_directory = true;
                     meta.git_status = match fs::canonicalize(&meta.path) {
                         Ok(filename) => {
-                            Some(GitFileStatusOrError(Ok(cache.get(&filename, is_directory))))
+                            Some(GitFileStatus::Ok(cache.get(&filename, is_directory)))
                         }
-                        Err(err) => Some(GitFileStatusOrError(Err(format!("error {}", err)))),
+                        Err(err) => Some(GitFileStatus::Err(format!("error {}", err))),
                     };
                 });
                 meta_list.push(meta);

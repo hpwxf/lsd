@@ -18,7 +18,7 @@ mod windows_utils;
 
 pub use self::date::Date;
 pub use self::filetype::FileType;
-pub use self::git_file_status::GitFileStatusOrError;
+pub use self::git_file_status::GitFileStatus;
 pub use self::indicator::Indicator;
 pub use self::inode::INode;
 pub use self::links::Links;
@@ -52,7 +52,7 @@ pub struct Meta {
     pub inode: INode,
     pub links: Links,
     pub content: Option<Vec<Meta>>,
-    pub git_status: Option<GitFileStatusOrError>,
+    pub git_status: Option<GitFileStatus>,
 }
 
 impl Meta {
@@ -152,8 +152,8 @@ impl Meta {
 
             cache.map(|cache| {
                 entry_meta.git_status = match fs::canonicalize(&entry_meta.path) {
-                    Ok(filename) => Some(GitFileStatusOrError(Ok(cache.get(&filename, is_directory)))),
-                    Err(err) => Some(GitFileStatusOrError(Err(format!("error {}", err)))),
+                    Ok(filename) => Some(GitFileStatus::Ok(cache.get(&filename, is_directory))),
+                    Err(err) => Some(GitFileStatus::Err(format!("error {}", err))),
                 }
             });
             

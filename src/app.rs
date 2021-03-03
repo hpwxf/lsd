@@ -234,7 +234,7 @@ pub fn build() -> App<'static, 'static> {
                     "name",
                     "inode",
                     "links",
-                    "git_status",
+                    "git",
                 ])
                 .help("Specify the blocks that will be displayed and in what order"),
         )

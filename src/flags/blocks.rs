@@ -210,7 +210,7 @@ impl TryFrom<&str> for Block {
             "name" => Ok(Self::Name),
             "inode" => Ok(Self::INode),
             "links" => Ok(Self::Links),
-            "git_status" => Ok(Self::GitStatus),
+            "git" => Ok(Self::GitStatus),
             _ => Err(format!("Not a valid block name: {}", &string)),
         }
     }
@@ -451,7 +451,7 @@ mod test_blocks {
         let argv = vec![
             "lsd",
             "--blocks",
-            "permission,name,group,git_status,date",
+            "permission,name,group,git,date",
             "--git",
         ];
         let matches = app::build().get_matches_from_safe(argv).unwrap();
@@ -475,7 +475,7 @@ mod test_blocks {
         let argv = vec![
             "lsd",
             "--blocks",
-            "permission,name,group,git_status,date",
+            "permission,name,group,git,date",
             "--git",
         ];
         let matches = app::build().get_matches_from_safe(argv).unwrap();
@@ -612,6 +612,6 @@ mod test_block {
 
     #[test]
     fn test_git_status() {
-        assert_eq!(Ok(Block::GitStatus), Block::try_from("git_status"));
+        assert_eq!(Ok(Block::GitStatus), Block::try_from("git"));
     }
 }
