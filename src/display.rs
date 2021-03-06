@@ -296,7 +296,7 @@ fn get_output<'a>(
             }
             Block::GitStatus => {
                 if let Some(s) = &meta.git_status {
-                    strings.push(s.render(icons))
+                    strings.push(s.render(colors, icons))
                 }
             }
         };

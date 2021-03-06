@@ -192,7 +192,7 @@ pub fn build() -> App<'static, 'static> {
             Arg::with_name("sort")
                 .long("sort")
                 .multiple(true)
-                .possible_values(&["size", "time", "version", "extension"])
+                .possible_values(&["size", "time", "version", "extension", "git"])
                 .takes_value(true)
                 .value_name("WORD")
                 .overrides_with("timesort")

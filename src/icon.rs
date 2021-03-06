@@ -1,6 +1,7 @@
-use crate::git::{GitStatus, StagedArea};
+use crate::git::GitStatus;
 use crate::meta::{FileType, Name};
 use std::collections::HashMap;
+use crate::flags::git_icons::GitIcons;
 
 pub struct Icons {
     display_icons: bool,
@@ -9,7 +10,7 @@ pub struct Icons {
     default_folder_icon: &'static str,
     default_file_icon: &'static str,
     icon_separator: String,
-    icons_by_git_status: HashMap<GitStatus, &'static str>,
+    git_icons: GitIcons,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -31,14 +32,12 @@ impl Icons {
             icons_by_extension,
             default_file_icon,
             default_folder_icon,
-            icons_by_git_status,
         ) = if theme == Theme::Fancy {
             (
                 Self::get_default_icons_by_name(),
                 Self::get_default_icons_by_extension(),
                 "\u{f016}", // 
                 "\u{f115}", // 
-                Self::get_default_icons_by_git_status(),
             )
         } else {
             (
@@ -46,7 +45,6 @@ impl Icons {
                 HashMap::new(),
                 "\u{1f5cb}", // 🗋
                 "\u{1f5c1}", // 🗁
-                HashMap::new(),
             )
         };
 
@@ -57,7 +55,7 @@ impl Icons {
             default_file_icon,
             default_folder_icon,
             icon_separator,
-            icons_by_git_status,
+            git_icons: GitIcons::new(theme),
         }
     }
 
@@ -352,40 +350,8 @@ impl Icons {
         m
     }
 
-    pub fn git_status_symbol(&self, status: &GitStatus, area: StagedArea) -> String {
-        if let Some(icon) = self.icons_by_git_status.get(status) {
-            icon.to_string()
-        } else {
-            match status {
-                GitStatus::Unmodified => "-",
-                GitStatus::New => match area {
-                    StagedArea::Index => "N",
-                    StagedArea::Workdir => "?",
-                },
-                GitStatus::Deleted => "D",
-                GitStatus::Modified => "M",
-                GitStatus::Renamed => "R",
-                GitStatus::Ignored => "!",
-                GitStatus::Typechange => "T",
-                GitStatus::Conflicted => "C",
-            }
-            .to_owned()
-        }
-    }
-
-    fn get_default_icons_by_git_status() -> HashMap<GitStatus, &'static str> {
-        let /* mut */ m = HashMap::new(); // FIXME prefer direct table
-
-        // m.insert(GitStatus::Unmodified, "\u{f00c}");
-        // m.insert(GitStatus::New, "\u{fafb}");
-        // m.insert(GitStatus::Deleted, "D");
-        // m.insert(GitStatus::Modified, "\u{f013}");
-        // m.insert(GitStatus::Renamed, "R");
-        // m.insert(GitStatus::Ignored, "\u{f12a}");
-        // m.insert(GitStatus::Typechange, "T");
-        // m.insert(GitStatus::Conflicted, "C");
-
-        m
+    pub fn get_status(&self, status: &GitStatus) -> String {
+        self.git_icons.get(status)
     }
 }
 

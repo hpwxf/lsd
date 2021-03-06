@@ -1,16 +1,20 @@
-#[allow(unused)]
-use log::{debug, error, info, trace, warn};
+use log::{debug, info, warn};
 use std::fs;
 use std::path::{Path, PathBuf};
+use crate::meta::git_file_status::GitFileStatus;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum GitStatus {
-    /// No changes
+    /// No status info
+    Default,
+    /// No changes (got from git status)
     Unmodified,
     /// Entry is ignored item in workdir
     Ignored,
-    /// Entry does not exist in old version
-    New,
+    /// Entry does not exist in old version (now in stage)
+    NewInStage,
+    /// Entry does not exist in old version (not in stage)
+    NewInWorkdir,
     /// Type of entry changed between old and new
     Typechange,
     /// Entry does not exist in new version
@@ -21,52 +25,6 @@ pub enum GitStatus {
     Modified,
     /// Entry in the index is conflicted
     Conflicted,
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub struct GitStagedStatus {
-    pub index: GitStatus,
-    pub workdir: GitStatus,
-}
-
-pub enum StagedArea {
-    Index,
-    Workdir
-}
-
-impl Default for GitStagedStatus {
-    fn default() -> Self {
-        Self {
-            index: GitStatus::Unmodified,
-            workdir: GitStatus::Unmodified,
-        }
-    }
-}
-
-impl GitStagedStatus {
-    fn new(status: git2::Status) -> Self {
-        Self {
-            index: match status {
-                s if s.contains(git2::Status::INDEX_NEW) => GitStatus::New,
-                s if s.contains(git2::Status::INDEX_DELETED) => GitStatus::Deleted,
-                s if s.contains(git2::Status::INDEX_MODIFIED) => GitStatus::Modified,
-                s if s.contains(git2::Status::INDEX_RENAMED) => GitStatus::Renamed,
-                s if s.contains(git2::Status::INDEX_TYPECHANGE) => GitStatus::Typechange,
-                _ => GitStatus::Unmodified,
-            },
-
-            workdir: match status {
-                s if s.contains(git2::Status::WT_NEW) => GitStatus::New,
-                s if s.contains(git2::Status::WT_DELETED) => GitStatus::Deleted,
-                s if s.contains(git2::Status::WT_MODIFIED) => GitStatus::Modified,
-                s if s.contains(git2::Status::WT_RENAMED) => GitStatus::Renamed,
-                s if s.contains(git2::Status::IGNORED) => GitStatus::Ignored,
-                s if s.contains(git2::Status::WT_TYPECHANGE) => GitStatus::Typechange,
-                s if s.contains(git2::Status::CONFLICTED) => GitStatus::Conflicted,
-                _ => GitStatus::Unmodified,
-            },
-        }
-    }
 }
 
 pub struct GitCache {
@@ -122,7 +80,7 @@ impl GitCache {
         }
     }
 
-    pub fn get(&self, filepath: &PathBuf, is_directory: bool) -> GitStagedStatus {
+    pub fn get(&self, filepath: &PathBuf, is_directory: bool) -> GitFileStatus {
         debug!("Look for [recurse={}] {:?}", is_directory, filepath);
 
         if is_directory {
@@ -130,8 +88,8 @@ impl GitCache {
                 .iter()
                 .filter(|&x| x.0.starts_with(filepath))
                 .inspect(|&x| debug!("\t{:?}", x.0))
-                .map(|x| GitStagedStatus::new(x.1))
-                .fold(GitStagedStatus::default(), |acc, x| GitStagedStatus {
+                .map(|x| GitFileStatus::new(x.1))
+                .fold(GitFileStatus::default(), |acc, x| GitFileStatus {
                     index: std::cmp::max(acc.index, x.index),
                     workdir: std::cmp::max(acc.workdir, x.workdir),
                 })
@@ -139,8 +97,8 @@ impl GitCache {
             self.statuses
                 .iter()
                 .find(|&x| filepath == &x.0)
-                .map(|e| GitStagedStatus::new(e.1))
-                .unwrap_or(GitStagedStatus::default())
+                .map(|e| GitFileStatus::new(e.1))
+                .unwrap_or(GitFileStatus::default())
         }
     }
 }

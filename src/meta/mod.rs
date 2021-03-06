@@ -1,9 +1,6 @@
-#[allow(unused)]
-use log::{debug, error, info, trace, warn};
-
 mod date;
 mod filetype;
-mod git_file_status;
+pub mod git_file_status;
 mod indicator;
 mod inode;
 mod links;
@@ -18,7 +15,6 @@ mod windows_utils;
 
 pub use self::date::Date;
 pub use self::filetype::FileType;
-pub use self::git_file_status::GitFileStatus;
 pub use self::indicator::Indicator;
 pub use self::inode::INode;
 pub use self::links::Links;
@@ -26,6 +22,7 @@ pub use self::name::Name;
 pub use self::owner::Owner;
 pub use self::permissions::Permissions;
 pub use self::size::Size;
+pub use self::git_file_status::GitFileStatus;
 pub use self::symlink::SymLink;
 pub use crate::icon::Icons;
 
@@ -37,6 +34,7 @@ use std::fs;
 use std::fs::read_link;
 use std::io::{Error, ErrorKind};
 use std::path::{Component, Path, PathBuf};
+use log::debug;
 
 #[derive(Clone, Debug)]
 pub struct Meta {
@@ -152,8 +150,11 @@ impl Meta {
 
             cache.map(|cache| {
                 entry_meta.git_status = match fs::canonicalize(&entry_meta.path) {
-                    Ok(filename) => Some(GitFileStatus::Ok(cache.get(&filename, is_directory))),
-                    Err(err) => Some(GitFileStatus::Err(format!("error {}", err))),
+                    Ok(filename) => Some(cache.get(&filename, is_directory)),
+                    Err(err) => {
+                        debug!("error {}", err);
+                        None
+                    }
                 }
             });
             

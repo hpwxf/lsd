@@ -3,10 +3,9 @@ use crate::display;
 use crate::flags::{Block, ColorOption, Display, Flags, IconOption, IconTheme, Layout, SortOrder};
 use crate::git::GitCache;
 use crate::icon::{self, Icons};
-use crate::meta::{GitFileStatus, Meta};
+use crate::meta::Meta;
 use crate::{print_error, print_output, sort};
-#[allow(unused)]
-use log::{debug, error, info, trace, warn};
+use log::debug;
 use std::path::PathBuf;
 
 #[cfg(not(target_os = "windows"))]
@@ -115,11 +114,10 @@ impl Core {
                         cache.map(|cache| {
                             let is_directory = true;
                             meta.git_status = match fs::canonicalize(&meta.path) {
-                                Ok(filename) => Some(GitFileStatus::Ok(
-                                    cache.get(&filename, is_directory)
-                                )),
+                                Ok(filename) => Some(cache.get(&filename, is_directory)),
                                 Err(err) => {
-                                    Some(GitFileStatus::Err(format!("error {}", err)))
+                                    debug!("error {}", err);
+                                    None
                                 }
                             };
                         });
@@ -131,14 +129,14 @@ impl Core {
                     }
                 };
             } else {
-                // FIXME DUPLICATED (cf above)
                 cache.map(|cache| {
                     let is_directory = true;
                     meta.git_status = match fs::canonicalize(&meta.path) {
-                        Ok(filename) => {
-                            Some(GitFileStatus::Ok(cache.get(&filename, is_directory)))
+                        Ok(filename) => Some(cache.get(&filename, is_directory)),
+                        Err(err) => {
+                            debug!("error {}", err);
+                            None
                         }
-                        Err(err) => Some(GitFileStatus::Err(format!("error {}", err))),
                     };
                 });
                 meta_list.push(meta);

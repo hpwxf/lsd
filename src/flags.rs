@@ -13,6 +13,7 @@ pub mod sorting;
 pub mod symlink_arrow;
 pub mod symlinks;
 pub mod total_size;
+pub mod git_icons;
 
 pub use blocks::Block;
 pub use blocks::Blocks;
