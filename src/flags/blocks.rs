@@ -421,6 +421,7 @@ mod test_blocks {
         });
     }
 
+    #[cfg(feature = "git")]
     #[test]
     fn test_from_arg_matches_implicit_add_git_block() {
         let argv = vec![
@@ -446,6 +447,7 @@ mod test_blocks {
         );
     }
 
+    #[cfg(feature = "git")]
     #[test]
     fn test_from_arg_matches_no_implicit_add_git_block_if_not_long() {
         let argv = vec![
@@ -470,6 +472,7 @@ mod test_blocks {
         );
     }
 
+    #[cfg(feature = "git")]
     #[test]
     fn test_from_arg_matches_no_implicit_add_git_block_if_already_here() {
         let argv = vec![
