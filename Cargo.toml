@@ -36,7 +36,7 @@ xdg = "2.1.*"
 yaml-rust = "0.4.*"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
-log = { version = "0.4", features = ["release_max_level_warn"] }
+log = { version = "0.4", features = ["release_max_level_error"] }
 
 [target.'cfg(unix)'.dependencies]
 users = "0.11.*"
@@ -48,9 +48,6 @@ winapi = { version = "0.3.*", features = ["aclapi", "accctrl", "winnt", "winerro
 version = "0.13"
 optional = true
 default-features = false
-
-[target.'cfg(target_arch = "x86_64")'.features]
-default = ["git"]
 
 [dependencies.clap]
 features = ["suggestions", "color", "wrap_help"]
