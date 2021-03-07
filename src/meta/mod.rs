@@ -150,7 +150,7 @@ impl Meta {
             };
 
             #[cfg(feature = "git")]
-            cache.map(|cache| {
+            if let Some(cache) = cache {
                 entry_meta.git_status = match std::fs::canonicalize(&entry_meta.path) {
                     Ok(filename) => Some(cache.get(&filename, is_directory)),
                     Err(err) => {
@@ -158,7 +158,7 @@ impl Meta {
                         None
                     }
                 }
-            });
+            };
             
             content.push(entry_meta);
         }

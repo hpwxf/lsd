@@ -98,7 +98,7 @@ impl GitCache {
                 .iter()
                 .find(|&x| filepath == &x.0)
                 .map(|e| GitFileStatus::new(e.1))
-                .unwrap_or(GitFileStatus::default())
+                .unwrap_or_default()
         }
     }
 }

@@ -114,7 +114,7 @@ impl Core {
                     Ok(content) => {
                         meta.content = content;
                         #[cfg(feature = "git")]
-                            cache.map(|cache| {
+                        if let Some(cache) = cache {
                             let is_directory = true;
                             meta.git_status = match std::fs::canonicalize(&meta.path) {
                                 Ok(filename) => Some(cache.get(&filename, is_directory)),
@@ -123,7 +123,7 @@ impl Core {
                                     None
                                 }
                             };
-                        });
+                        };
                         meta_list.push(meta);
                     }
                     Err(err) => {
@@ -133,7 +133,7 @@ impl Core {
                 };
             } else {
                 #[cfg(feature = "git")]
-                cache.map(|cache| {
+                if let Some(cache) = cache {
                     let is_directory = true;
                     meta.git_status = match std::fs::canonicalize(&meta.path) {
                         Ok(filename) => Some(cache.get(&filename, is_directory)),
@@ -142,7 +142,7 @@ impl Core {
                             None
                         }
                     };
-                });
+                };
                 meta_list.push(meta);
             };
         }

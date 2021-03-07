@@ -30,13 +30,9 @@ static LOGGER: &SimpleLogger = &SimpleLogger;
 
 pub fn init() {
     if let Ok(value) = std::env::var("LSD_LOGGER") {
-        match value.as_str() {
-            _ => {
-                println!("Logger started");
-                log::set_logger(LOGGER)
-                    .map(|()| log::set_max_level(LevelFilter::Debug))
-                    .unwrap();
-            }
-        }
+        log::set_logger(LOGGER)
+            .map(|()| log::set_max_level(LevelFilter::Debug))
+            .unwrap();
+        log::info!("Logger started");
     }
 }
