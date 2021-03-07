@@ -44,10 +44,13 @@ users = "0.11.*"
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3.*", features = ["aclapi", "accctrl", "winnt", "winerror", "securitybaseapi", "winbase"] }
 
-[target.'cfg(target_arch = "x86_64")'.dependencies.git2]
+[dependencies.git2]
 version = "0.13"
 optional = true
 default-features = false
+
+[target.'cfg(target_arch = "x86_64")'.features]
+default = ["git"]
 
 [dependencies.clap]
 features = ["suggestions", "color", "wrap_help"]
@@ -61,6 +64,6 @@ tempfile = "3"
 serial_test = "0.5"
 
 [features]
-default = ["git"]
+default = []
 sudo = []
 git = ["git2"]
