@@ -53,6 +53,7 @@ pub enum Elem {
         valid: bool,
     },
 
+    #[cfg(feature = "git")]
     GitStatus {
         status: crate::git::GitStatus
     },
@@ -259,16 +260,19 @@ impl Colors {
         m.insert(Elem::Links { valid: false }, Colour::Fixed(245));
 
         // GitStatus
-        m.insert(Elem::GitStatus { status: crate::git::GitStatus::Default }, Colour::White);
-        m.insert(Elem::GitStatus { status: crate::git::GitStatus::Unmodified }, Colour::White);
-        m.insert(Elem::GitStatus { status: crate::git::GitStatus::Ignored }, Colour::Fixed(245)); // Grey
-        m.insert(Elem::GitStatus { status: crate::git::GitStatus::NewInIndex }, Colour::Green);
-        m.insert(Elem::GitStatus { status: crate::git::GitStatus::NewInWorkdir }, Colour::White);
-        m.insert(Elem::GitStatus { status: crate::git::GitStatus::Typechange }, Colour::White);
-        m.insert(Elem::GitStatus { status: crate::git::GitStatus::Deleted }, Colour::Red);
-        m.insert(Elem::GitStatus { status: crate::git::GitStatus::Renamed }, Colour::Fixed(172)); // Orange3
-        m.insert(Elem::GitStatus { status: crate::git::GitStatus::Modified }, Colour::Blue);
-        m.insert(Elem::GitStatus { status: crate::git::GitStatus::Conflicted }, Colour::Red);
+        #[cfg(feature = "git")]
+            {
+                m.insert(Elem::GitStatus { status: crate::git::GitStatus::Default }, Colour::White);
+                m.insert(Elem::GitStatus { status: crate::git::GitStatus::Unmodified }, Colour::White);
+                m.insert(Elem::GitStatus { status: crate::git::GitStatus::Ignored }, Colour::Fixed(245)); // Grey
+                m.insert(Elem::GitStatus { status: crate::git::GitStatus::NewInIndex }, Colour::Green);
+                m.insert(Elem::GitStatus { status: crate::git::GitStatus::NewInWorkdir }, Colour::White);
+                m.insert(Elem::GitStatus { status: crate::git::GitStatus::Typechange }, Colour::White);
+                m.insert(Elem::GitStatus { status: crate::git::GitStatus::Deleted }, Colour::Red);
+                m.insert(Elem::GitStatus { status: crate::git::GitStatus::Renamed }, Colour::Fixed(172)); // Orange3
+                m.insert(Elem::GitStatus { status: crate::git::GitStatus::Modified }, Colour::Blue);
+                m.insert(Elem::GitStatus { status: crate::git::GitStatus::Conflicted }, Colour::Red);
+            }
 
         m
     }

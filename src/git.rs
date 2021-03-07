@@ -310,7 +310,7 @@ mod tests {
         //     .status()
         //     .expect("Git status failed")
         //     .success();
-        
+
         // Check now
         check_cache(root.path(), &expected_statuses);
     }

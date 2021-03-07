@@ -29,12 +29,13 @@ pub use crate::icon::Icons;
 use crate::flags::{Display, Flags, Layout};
 use crate::print_error;
 
+#[cfg(feature = "git")]
 use crate::git::GitCache;
-use std::fs;
+#[cfg(not(feature = "git"))]
+use crate::git_stub::GitCache;
 use std::fs::read_link;
 use std::io::{Error, ErrorKind};
 use std::path::{Component, Path, PathBuf};
-use log::debug;
 
 #[derive(Clone, Debug)]
 pub struct Meta {
@@ -148,11 +149,12 @@ impl Meta {
                 }
             };
 
+            #[cfg(feature = "git")]
             cache.map(|cache| {
-                entry_meta.git_status = match fs::canonicalize(&entry_meta.path) {
+                entry_meta.git_status = match std::fs::canonicalize(&entry_meta.path) {
                     Ok(filename) => Some(cache.get(&filename, is_directory)),
                     Err(err) => {
-                        debug!("error {}", err);
+                        log::debug!("error {}", err);
                         None
                     }
                 }

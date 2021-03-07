@@ -1,7 +1,5 @@
-use crate::git::GitStatus;
 use crate::meta::{FileType, Name};
 use std::collections::HashMap;
-use crate::flags::git_icons::GitIcons;
 
 pub struct Icons {
     display_icons: bool,
@@ -10,7 +8,8 @@ pub struct Icons {
     default_folder_icon: &'static str,
     default_file_icon: &'static str,
     icon_separator: String,
-    git_icons: GitIcons,
+    #[cfg(feature = "git")]
+    git_icons: crate::flags::git_icons::GitIcons,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -55,7 +54,8 @@ impl Icons {
             default_file_icon,
             default_folder_icon,
             icon_separator,
-            git_icons: GitIcons::new(theme),
+            #[cfg(feature = "git")]
+            git_icons: crate::flags::git_icons::GitIcons::new(theme),
         }
     }
 
@@ -350,7 +350,8 @@ impl Icons {
         m
     }
 
-    pub fn get_status(&self, status: &GitStatus) -> String {
+    #[cfg(feature = "git")]
+    pub fn get_status(&self, status: &crate::git::GitStatus) -> String {
         self.git_icons.get(status)
     }
 }

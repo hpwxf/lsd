@@ -13,6 +13,7 @@ pub mod sorting;
 pub mod symlink_arrow;
 pub mod symlinks;
 pub mod total_size;
+#[cfg(feature = "git")]
 pub mod git_icons;
 
 pub use blocks::Block;

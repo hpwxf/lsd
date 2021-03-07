@@ -34,7 +34,10 @@ mod config_file;
 mod core;
 mod display;
 mod flags;
+#[cfg(feature = "git")]
 mod git;
+#[cfg(not(feature = "git"))]
+mod git_stub;
 mod icon;
 mod logger;
 mod meta;

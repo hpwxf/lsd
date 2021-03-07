@@ -1,11 +1,14 @@
 use crate::color::{self, Colors};
 use crate::display;
 use crate::flags::{Block, ColorOption, Display, Flags, IconOption, IconTheme, Layout, SortOrder};
+#[cfg(feature = "git")]
 use crate::git::GitCache;
+#[cfg(not(feature = "git"))]
+use crate::git_stub::GitCache;
+
 use crate::icon::{self, Icons};
 use crate::meta::Meta;
 use crate::{print_error, print_output, sort};
-use log::debug;
 use std::path::PathBuf;
 
 #[cfg(not(target_os = "windows"))]
@@ -13,7 +16,6 @@ use std::io;
 #[cfg(not(target_os = "windows"))]
 use std::os::unix::io::AsRawFd;
 
-use std::fs;
 #[cfg(target_os = "windows")]
 use terminal_size::terminal_size;
 
@@ -30,16 +32,16 @@ impl Core {
         // Check through libc if stdout is a tty. Unix specific so not on Windows.
         // Determine color output availability (and initialize color output (for Windows 10))
         #[cfg(not(target_os = "windows"))]
-        let tty_available = unsafe { libc::isatty(io::stdout().as_raw_fd()) == 1 };
+            let tty_available = unsafe { libc::isatty(io::stdout().as_raw_fd()) == 1 };
 
         #[cfg(not(target_os = "windows"))]
-        let console_color_ok = true;
+            let console_color_ok = true;
 
         #[cfg(target_os = "windows")]
-        let tty_available = terminal_size().is_some(); // terminal_size allows us to know if the stdout is a tty or not.
+            let tty_available = terminal_size().is_some(); // terminal_size allows us to know if the stdout is a tty or not.
 
         #[cfg(target_os = "windows")]
-        let console_color_ok = ansi_term::enable_ansi_support().is_ok();
+            let console_color_ok = ansi_term::enable_ansi_support().is_ok();
 
         let mut inner_flags = flags.clone(); // FIXME not used ?
 
@@ -111,12 +113,13 @@ impl Core {
                 match meta.recurse_into(depth, &self.flags, cache.as_ref()) {
                     Ok(content) => {
                         meta.content = content;
-                        cache.map(|cache| {
+                        #[cfg(feature = "git")]
+                            cache.map(|cache| {
                             let is_directory = true;
-                            meta.git_status = match fs::canonicalize(&meta.path) {
+                            meta.git_status = match std::fs::canonicalize(&meta.path) {
                                 Ok(filename) => Some(cache.get(&filename, is_directory)),
                                 Err(err) => {
-                                    debug!("error {}", err);
+                                    log::debug!("error {}", err);
                                     None
                                 }
                             };
@@ -129,12 +132,13 @@ impl Core {
                     }
                 };
             } else {
+                #[cfg(feature = "git")]
                 cache.map(|cache| {
                     let is_directory = true;
-                    meta.git_status = match fs::canonicalize(&meta.path) {
+                    meta.git_status = match std::fs::canonicalize(&meta.path) {
                         Ok(filename) => Some(cache.get(&filename, is_directory)),
                         Err(err) => {
-                            debug!("error {}", err);
+                            log::debug!("error {}", err);
                             None
                         }
                     };

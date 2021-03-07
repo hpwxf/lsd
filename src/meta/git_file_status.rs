@@ -1,7 +1,7 @@
-use crate::color::{ColoredString, Colors, Elem};
+#[cfg(feature = "git")]
 use crate::git::GitStatus;
-use crate::icon::Icons;
-use ansi_term::ANSIStrings;
+#[cfg(not(feature = "git"))]
+use crate::git_stub::GitStatus;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct GitFileStatus {
@@ -18,6 +18,7 @@ impl Default for GitFileStatus {
     }
 }
 
+#[cfg(feature = "git")]
 impl GitFileStatus {
     pub fn new(status: git2::Status) -> Self {
         Self {
@@ -44,14 +45,14 @@ impl GitFileStatus {
     }
 
     pub fn render(&self,
-                  colors: &Colors,
-                  icons: &Icons) -> ColoredString {
+                  colors: &crate::color::Colors,
+                  icons: &crate::icon::Icons) -> crate::color::ColoredString {
         let strings = &[
-            colors.colorize(icons.get_status(&self.index), &Elem::GitStatus { status: self.index }),
-            ColoredString::from(" "),
-            colors.colorize(icons.get_status(&self.workdir), &Elem::GitStatus { status: self.workdir })
+            colors.colorize(icons.get_status(&self.index), &crate::color::Elem::GitStatus { status: self.index }),
+            crate::color::ColoredString::from(" "),
+            colors.colorize(icons.get_status(&self.workdir), &crate::color::Elem::GitStatus { status: self.workdir })
         ];
-        let res = ANSIStrings(strings).to_string();
-        ColoredString::from(res)
+        let res = ansi_term::ANSIStrings(strings).to_string();
+        crate::color::ColoredString::from(res)
     }
 }

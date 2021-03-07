@@ -9,9 +9,12 @@ use term_grid::{Cell, Direction, Filling, Grid, GridOptions};
 use terminal_size::terminal_size;
 use unicode_width::UnicodeWidthStr;
 
-const EDGE: &str = "\u{251c}\u{2500}\u{2500}"; // "├──"
-const LINE: &str = "\u{2502}  "; // "├  "
-const CORNER: &str = "\u{2514}\u{2500}\u{2500}"; // "└──"
+const EDGE: &str = "\u{251c}\u{2500}\u{2500}";
+// "├──"
+const LINE: &str = "\u{2502}  ";
+// "├  "
+const CORNER: &str = "\u{2514}\u{2500}\u{2500}";
+// "└──"
 const BLANK: &str = "   ";
 
 pub fn grid(metas: &[Meta], flags: &Flags, colors: &Colors, icons: &Icons) -> String {
@@ -68,8 +71,8 @@ fn inner_display_grid(
         // Maybe skip showing the directory meta now; show its contents later.
         if skip_dirs
             && (matches!(meta.file_type, FileType::Directory { .. })
-                || (matches!(meta.file_type, FileType::SymLink { is_dir: true })
-                    && flags.layout != Layout::OneLine))
+            || (matches!(meta.file_type, FileType::SymLink { is_dir: true })
+            && flags.layout != Layout::OneLine))
         {
             continue;
         }
@@ -228,7 +231,7 @@ fn should_display_folder_path(depth: usize, metas: &[Meta], flags: &Flags) -> bo
             .filter(|x| {
                 matches!(x.file_type, FileType::Directory { .. })
                     || (matches!(x.file_type, FileType::SymLink { is_dir: true })
-                        && flags.layout != Layout::OneLine)
+                    && flags.layout != Layout::OneLine)
             })
             .count();
 
@@ -282,21 +285,24 @@ fn get_output<'a>(
                             meta.name.render(colors, icons, &display_option),
                             meta.indicator.render(&flags),
                         ])
-                        .to_string()
+                            .to_string()
                     } else {
                         ANSIStrings(&[
                             meta.name.render(colors, icons, &display_option),
                             meta.indicator.render(&flags),
                             meta.symlink.render(colors, &flags),
                         ])
-                        .to_string()
+                            .to_string()
                     };
 
                 strings.push(ColoredString::from(s));
             }
             Block::GitStatus => {
-                if let Some(s) = &meta.git_status {
-                    strings.push(s.render(colors, icons))
+                if let Some(_s) = &meta.git_status {
+                    #[cfg(not(feature = "git"))]
+                    panic!("git feature is disabled");
+                    #[cfg(feature = "git")]
+                    strings.push(_s.render(colors, icons));
                 }
             }
         };
