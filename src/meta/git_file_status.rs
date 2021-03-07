@@ -22,7 +22,7 @@ impl GitFileStatus {
     pub fn new(status: git2::Status) -> Self {
         Self {
             index: match status {
-                s if s.contains(git2::Status::INDEX_NEW) => GitStatus::NewInStage,
+                s if s.contains(git2::Status::INDEX_NEW) => GitStatus::NewInIndex,
                 s if s.contains(git2::Status::INDEX_DELETED) => GitStatus::Deleted,
                 s if s.contains(git2::Status::INDEX_MODIFIED) => GitStatus::Modified,
                 s if s.contains(git2::Status::INDEX_RENAMED) => GitStatus::Renamed,

@@ -24,7 +24,7 @@ impl GitIcons {
         match status {
             GitStatus::Default => "-",
             GitStatus::Unmodified => "-",
-            GitStatus::NewInStage => "N",
+            GitStatus::NewInIndex => "N",
             GitStatus::NewInWorkdir => "?",
             GitStatus::Deleted => "D",
             GitStatus::Modified => "M",
@@ -39,7 +39,7 @@ impl GitIcons {
         match status {
             GitStatus::Default => "_", 
             GitStatus::Unmodified => "_", // "\u{f00c}" 
-            GitStatus::NewInStage => "\u{f067}",
+            GitStatus::NewInIndex => "\u{f067}",
             GitStatus::NewInWorkdir => "?",
             GitStatus::Deleted => "\u{f014}", // or f068
             GitStatus::Modified => "\u{f8ea}",

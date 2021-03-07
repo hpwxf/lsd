@@ -262,7 +262,7 @@ impl Colors {
         m.insert(Elem::GitStatus { status: crate::git::GitStatus::Default }, Colour::White);
         m.insert(Elem::GitStatus { status: crate::git::GitStatus::Unmodified }, Colour::White);
         m.insert(Elem::GitStatus { status: crate::git::GitStatus::Ignored }, Colour::Fixed(245)); // Grey
-        m.insert(Elem::GitStatus { status: crate::git::GitStatus::NewInStage }, Colour::Green);
+        m.insert(Elem::GitStatus { status: crate::git::GitStatus::NewInIndex }, Colour::Green);
         m.insert(Elem::GitStatus { status: crate::git::GitStatus::NewInWorkdir }, Colour::White);
         m.insert(Elem::GitStatus { status: crate::git::GitStatus::Typechange }, Colour::White);
         m.insert(Elem::GitStatus { status: crate::git::GitStatus::Deleted }, Colour::Red);
